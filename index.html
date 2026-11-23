@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>IMIC 채점 결정표</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2330;--sub:#5b6475;--line:#dde1e8;--acc:#2f6fdf;--accbg:#eaf1fd;--warn:#b5560b;--warnbg:#fff3e6;--ok:#1d7a46;--okbg:#e7f6ee}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--card:#1d2128;--ink:#e6e9ef;--sub:#9aa3b2;--line:#323844;--acc:#7aa7ff;--accbg:#1f2b42;--warn:#ffb36b;--warnbg:#3a2a18;--ok:#6fd49b;--okbg:#17321f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:15px;line-height:1.55}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;flex:1 1 auto}
+.prog{color:var(--sub);font-size:13px}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 14px;cursor:pointer}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+main{max-width:980px;margin:0 auto;padding:16px}
+.intro{background:var(--accbg);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:14px}
+.intro b{color:var(--acc)}
+h2{font-size:16px;margin:26px 0 10px;padding-left:8px;border-left:4px solid var(--acc)}
+.item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.item.done{border-color:var(--ok)}
+.top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--acc)}
+.q{font-size:12px;background:var(--accbg);color:var(--acc);border-radius:6px;padding:1px 7px}
+.title{font-weight:700}
+.badge{font-size:12px;border-radius:6px;padding:1px 7px;background:var(--warnbg);color:var(--warn)}
+.desc{color:var(--sub);font-size:14px;margin:6px 0 8px}
+.desc ul{margin:4px 0;padding-left:20px}
+.opts{display:flex;flex-direction:column;gap:6px}
+label.opt{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:8px;cursor:pointer}
+label.opt:hover{background:var(--accbg)}
+label.opt input{margin-top:4px}
+.rec{font-size:12px;color:var(--ok);background:var(--okbg);border-radius:6px;padding:0 6px;margin-left:4px;white-space:nowrap}
+.extra{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.extra input[type=text]{flex:1 1 260px;font:inherit;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.score{width:90px!important;flex:0 0 90px!important}
+textarea{width:100%;min-height:90px;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+#out{min-height:220px;font-family:Consolas,"D2Coding",monospace;font-size:13px}
+.outbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:20px 0 40px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ok);color:#fff;padding:8px 16px;border-radius:8px;display:none}
+@media (max-width:600px){main{padding:12px 16px}header h1{font-size:15px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>IMIC 중등 1차 채점 — 정할 사항</h1>
+  <span class="prog" id="prog"></span>
+  <button onclick="resetAll()">모두 지우기</button>
+  <button class="primary" onclick="copyOut()">결과 복사</button>
+</header>
+<main>
+<div class="intro">
+  두 채점위원(정지은 16명·조창현 16명) 시험지를 분석해서 나온 쟁점이에요. 항목마다 하나를 고르고, 필요하면 메모를 적은 뒤 맨 위 <b>[결과 복사]</b>를 눌러 Claude에게 붙여 넣으세요.<br>
+  · <span class="rec">기준표</span>는 채점기준표 문구대로의 점수예요. 채점위원들이 일관되게 다르게 채점했다면 현장에서 기준이 수정된 것으로 보고 정해도 돼요.<br>
+  · 지금 정하기 어려우면 <b>"11명 결과 보고 정함"</b>을 고르면 돼요. 고른 내용은 이 브라우저에 저장돼요.
+</div>
+<div id="list"></div>
+<div class="outbox">
+  <b>전체 메모</b>
+  <textarea id="memo" placeholder="그 밖에 전할 말 (예: 현장에서 이렇게 정했었다, 누구에게 확인할 것 등)"></textarea>
+  <p style="margin:14px 0 6px"><b>복사될 결과</b> <span class="prog">(복사 직전에 이 칸을 직접 고쳐도 돼요 — 복사는 이 칸 내용 그대로)</span></p>
+  <textarea id="out"></textarea>
+  <p style="text-align:right;margin:8px 0 0"><button class="primary" onclick="copyOut()">결과 복사</button></p>
+</div>
+</main>
+<div class="toast" id="toast">복사했어요. Claude 창에 붙여 넣으세요.</div>
+<script>
+const HOLD = '11명 결과 보고 정함';
+const D = [
+ {sec:'A. 공통 원칙'},
+ {id:'A1',q:'공통',t:'풀이 없이 정답만 쓴 경우',d:'2-1: 01-09 0점(정지은) / 06-19 3점(조창현). 다른 문항에도 계속 나올 유형.',
+  o:[['0점 + 시험지에 \'정답은 맞음\' 표시','기준표'],['답 항목 점수 일부 인정 (메모에 몇 점인지)'],[HOLD]]},
+ {id:'A2',q:'2-1',t:'항목 점수로 만들 수 없는 점수',d:'01-04 2-1이 4점인데 항목은 3점·2점뿐이라 4점이 나올 수 없음.',
+  o:[['항목 합으로 맞춤 (3점)','기준표'],['그대로 4점'],[HOLD]]},
+ {sec:'B. 문항별 쟁점 — 두 위원이 같은 쪽으로 기준표와 다름 (현장 조정 후보)'},
+ {id:'B1',q:'4-1',t:'60°를 이끌어 내지 않고(그림에만/평행 단정) 길이 계산으로 차 1을 구함',d:'둘 다 10점 경향: 06-10·06-14·06-20·06-21(조창현), 01-17·02-01(정지은). 기준표대로면 60° 유도 항목이 빠져 6점.',
+  o:[['10점 (현장 조정으로 확정)'],['6점','기준표'],[HOLD]]},
+ {id:'B5',q:'3-1',t:'\'가능\'이라 했지만 그린 과정으로는 실제로 다 열리지 않음',d:'둘 다 5점 경향: 01-03(정지은), 06-07·06-08·06-10(조창현). 06-21만 2점.',
+  o:[['5점 (현장 조정으로 확정, 06-21도 5점)'],['2점 (판단 점수만)','기준표'],[HOLD]]},
+ {id:'B14',q:'2-1',t:'범위를 \'k=0이면 30, k=10이면 20\' 양 끝값으로만 씀',d:'둘 다 5점: 01-16, 06-18, 06-20.',
+  o:[['5점으로 확정','기준표'],['다른 점수 (메모)'],[HOLD]]},
+ {sec:'B. 문항별 쟁점 — 두 위원이 다르게 채점'},
+ {id:'B2',q:'1-2',t:'큰 간격 m−1개에서 끊는 방법만, 왜 그런지 이유 없음',d:'정지은 10점(01-15·01-17·02-02), 조창현 10점(06-09)·5점(06-14·06-20). 01-17과 06-20은 문장까지 거의 같음.',
+  o:[['10점'],['5점','기준표'],[HOLD]]},
+ {id:'B3',q:'1-1',t:'그룹과 총비용 9만, 끊는 근거 없음',d:'정지은 3점(01-01·01-06·01-09·01-12·01-16, 5→3으로 고친 흔적), 조창현 5점(06-04·06-14·06-18·06-19).',
+  o:[['5점'],['3점','기준표'],[HOLD]]},
+ {id:'B4',q:'3-2',t:'\'홀짝이 유지된다\'고만 쓰고 m이 짝수인 이유 없음',d:'01-16 5점(정지은), 06-05 5점·06-12 15점(조창현). 01-16과 06-12는 문장이 거의 같음.',
+  o:[['15점'],['5점 (판단만)','기준표'],[HOLD]]},
+ {id:'B11',q:'2-2',t:'"단독 1위는 1승 3무여야" 주장 — "6점 이상" 추가 결정을 어디까지 적용?',d:'같은 주장인데 01-15 10점(정지은), 06-09 4점(조창현).',
+  o:[['1위 승점 하한 6을 밝힌 서술만 +4 (01-15 10, 06-09 8)','추천'],['\'1승 3무\' 주장도 인정 (둘 다 10)'],['둘 다 4점'],[HOLD]]},
+ {id:'B13',q:'1-1',t:'다른 나눔 하나와 비교한 뒤 정답을 고름',d:'01-07 3점(정지은), 06-05 5점(조창현).',
+  o:[['5점','추천'],['3점'],[HOLD]]},
+ {sec:'B. 문항별 쟁점 — 한 위원 안에서 갈리거나 부분 점수 범위'},
+ {id:'B6',q:'5번',t:'5번 부분 점수',d:'정지은 16명 모두 0점. 기준표대로면 5명이 부분 점수 대상: 01-15 (1)10·(2)11, 01-20 (1)10·(2)10, 02-02 (1)7, 01-17 (2)4, 01-09 (1)3.',
+  o:[['현장에서 "부분 점수 없이"로 정했음 → 0점 유지'],['기준표대로 부분 점수','기준표'],['정지은 선생님께 먼저 확인'],[HOLD]]},
+ {id:'B7',q:'5-1',t:'약분하지 않은 (ka,kb)에 상한을 걸고 1을 뺌',d:'조창현 안에서 06-10 0점, 06-19 4점.',
+  o:[['4점','추천'],['2점'],['0점'],[HOLD]]},
+ {id:'B8',q:'5-1',t:'기울기가 정수인 A(a,pa)만 설명',d:'06-09 4점(조창현).',
+  o:[['4점','추천'],['0점'],[HOLD]]},
+ {id:'B9',q:'5-2',t:'세부 규칙 (해당하는 것 모두 체크)',d:'06-06은 조건 설명 없이 ×4로 격자판 밖까지 세어 112개인데 15점.',multi:true,
+  o:[['서로소 쌍 1~2개 빠짐 → 경우 찾기 2점, 3쌍 이상 → 0점'],['조건 설명 4점은 말로 쓴 조건만 인정'],['최종 개수가 틀리면 마지막 3점 없음 (06-06 → 8점)'],['7쌍을 \'큰 수 3 이하\' 이유 없이 나열해도 경우 찾기 4점'],[HOLD]]},
+ {id:'B10',q:'2-2',t:'\'경기 결과의 예\'(4점) 최소 요건',d:'01-12 0점(설명 없는 표지만 내용은 기준표 예와 같음), 01-09 0점(승점 숫자만), 06-05·06-14 인정. 02-01은 실제로 나올 수 없는 결과인데 4점.',
+  o:[['다섯 팀 결과가 하나로 정해지면 형식 상관없이 4점, 승점 숫자만이면 0점','추천'],['표와 설명을 갖춘 경우만 4점'],[HOLD]],
+  chk:'실제로 나올 수 없는 예는 0점 (02-01 4→0)'},
+ {id:'B12',q:'4-1',t:'한 내각 150° 표기 위치',d:'01-09(그림 표시)·01-12(숫자만) 0점(정지은), 06-14·06-20(그림 표시) 인정(조창현). 여백 낙서 계산만 있는 01-07·06-13은 둘 다 0점.',
+  o:[['답란에 있으면 글이든 그림이든 2점, 여백 낙서만이면 0점','추천'],['글로 쓴 경우만 2점'],[HOLD]]},
+ {sec:'C. 확인할 곳 (방식 차이보다 놓침·기록 실수로 보이는 것)'},
+ {id:'C1',q:'4-2',t:'02-02 4-2 — 0점',d:'n=3p, k=n/3+2를 일반적으로 이끌고 2cos60°로 차 1을 보임. 기준표대로면 13점 안팎(정지은).',sc:true,
+  o:[['기준표대로 점수 줌 (점수 칸에 입력)'],['0점 유지'],['정지은 선생님께 확인']]},
+ {id:'C2',q:'5-2',t:'06-09 5-2 — 숫자 \'5\'에 동그라미',d:'동그라미는 보통 만점 표시. 앱 총점 63은 5점으로 계산된 값(조창현).',sc:true,
+  o:[['15점이 맞음'],['5점이 맞음'],['다른 점수 (점수 칸)']]},
+ {id:'C3',q:'4-1',t:'06-08 4-1 — 6점',d:'원주각으로 끝까지 푼 답. 같은 원주각 풀이 06-09는 10점(조창현).',sc:true,
+  o:[['10점으로'],['6점 유지 (이유는 메모)'],['다시 볼게요']]},
+ {id:'C4',q:'1-1',t:'01-15 1-1 — 0점',d:'그룹·끊는 근거는 맞고 총비용을 8로 잘못 계산(정지은). 기준표대로면 2점.',sc:true,
+  o:[['2점으로'],['0점 유지 (현장에서 최종 답 틀리면 0점으로 정함)'],[HOLD]]},
+ {id:'C5',q:'3-2',t:'06-04 3-2 — 5점',d:'성립하지 않는 근거로 \'할 수 없다\'고 판단(조창현). 같은 유형 01-06·01-07·06-13은 0점.',sc:true,
+  o:[['0점으로'],['5점 유지'],[HOLD]]},
+ {id:'C6',q:'앱',t:'앱 총점이 시험지와 다름 (정지은 7명)',d:'1-1 5→3 고친 것 미반영 5명(01-01·06·07·12·16), 01-09 6점 차이, 02-01 입력 없음.',
+  o:[['최종 점수표는 시험지 기준으로 Claude가 맞춤'],['정지은 선생님께 앱 수정 요청'],['나중에']]},
+];
+const KEY='imic-decide-v1';
+let S={};
+try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){S={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function render(){
+  const L=document.getElementById('list');let h='';
+  for(const it of D){
+    if(it.sec){h+=`<h2>${esc(it.sec)}</h2>`;continue}
+    const st=S[it.id]||{};const type=it.multi?'checkbox':'radio';
+    h+=`<div class="item" id="it-${it.id}"><div class="top"><span class="id">${it.id}</span><span class="q">${esc(it.q)}</span><span class="title">${esc(it.t)}</span></div><div class="desc">${esc(it.d)}</div><div class="opts">`;
+    it.o.forEach((o,i)=>{const on=it.multi?(st.m||[]).includes(i):st.c===i;
+      h+=`<label class="opt"><input type="${type}" name="r-${it.id}" data-id="${it.id}" data-i="${i}" ${on?'checked':''}><span>${esc(o[0])}${o[1]?`<span class="rec">${esc(o[1])}</span>`:''}</span></label>`});
+    if(it.chk) h+=`<label class="opt"><input type="checkbox" data-chk="${it.id}" ${st.k?'checked':''}><span>추가: ${esc(it.chk)}</span></label>`;
+    h+=`</div><div class="extra">${it.sc?`<input type="text" class="score" data-sc="${it.id}" placeholder="점수" value="${esc(st.s||'')}">`:''}<input type="text" data-memo="${it.id}" placeholder="메모 (선택)" value="${esc(st.n||'')}"></div></div>`;
+  }
+  L.innerHTML=h;
+  document.getElementById('memo').value=S._memo||'';
+  update();
+}
+function update(){
+  let n=0,tot=0;const lines=[];
+  const now=new Date();const ts=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  lines.push(`[IMIC 채점 결정 회신] ${ts}`);
+  for(const it of D){if(it.sec)continue;tot++;const st=S[it.id]||{};
+    let ans;if(it.multi){const m=st.m||[];ans=m.length?m.map(i=>it.o[i][0]).join(' / '):''}else ans=st.c!=null?it.o[st.c][0]:'';
+    if(it.chk&&st.k) ans+=(ans?' + ':'')+it.chk;
+    const done=!!ans;if(done)n++;
+    document.getElementById('it-'+it.id).classList.toggle('done',done);
+    let l=`${it.id} (${it.q}) ${it.t} → ${ans||'(미선택)'}`;
+    if(st.s) l+=` | 점수: ${st.s}`; if(st.n) l+=` | 메모: ${st.n}`;
+    lines.push(l);}
+  if(S._memo) lines.push(`전체 메모: ${S._memo}`);
+  document.getElementById('prog').textContent=`${n}/${tot} 선택`;
+  document.getElementById('out').value=lines.join('\n');
+}
+document.addEventListener('change',e=>{const t=e.target;
+  if(t.dataset.id){const id=t.dataset.id,i=+t.dataset.i,st=S[id]=S[id]||{};
+    if(t.type==='checkbox'){const m=new Set(st.m||[]);t.checked?m.add(i):m.delete(i);st.m=[...m].sort()}else st.c=i}
+  if(t.dataset.chk){(S[t.dataset.chk]=S[t.dataset.chk]||{}).k=t.checked}
+  save();update();});
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.dataset.memo!=null&&t.dataset.memo){(S[t.dataset.memo]=S[t.dataset.memo]||{}).n=t.value}
+  else if(t.dataset.sc){(S[t.dataset.sc]=S[t.dataset.sc]||{}).s=t.value}
+  else if(t.id==='memo'){S._memo=t.value}
+  else return; save();update();});
+function copyOut(){const ta=document.getElementById('out');const txt=ta.value;
+  const ok=()=>{const x=document.getElementById('toast');x.style.display='block';setTimeout(()=>x.style.display='none',1800)};
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(txt).then(ok,()=>{ta.select();document.execCommand('copy');ok()})}
+  else{ta.select();document.execCommand('copy');ok()}}
+function resetAll(){S={};save();render()}
+render();
+</script>
+</body>
+</html>
